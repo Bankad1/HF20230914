@@ -1,43 +1,90 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
-class Knapsack
+class HuffmanNode
 {
-    static int KnapsackDP(int[] weights, int[] values, int capacity)
-    {
-        int n = weights.Length;
-        int[,] dp = new int[n + 1, capacity + 1];
+    public char Character { get; set; }
+    public int Frequency { get; set; }
+    public HuffmanNode Left { get; set; }
+    public HuffmanNode Right { get; set; }
+}
 
-        // Build the knapsack table
-        for (int i = 0; i <= n; i++)
-        {
-            for (int w = 0; w <= capacity; w++)
+class Huffman
+{
+    public static Dictionary<char, string> Compress(string text)
+    {
+        Dictionary<char, int> frequencies = text
+            .GroupBy(c => c)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        List<HuffmanNode> nodes = frequencies
+            .Select(pair => new HuffmanNode
             {
-                if (i == 0 || w == 0)
+                Character = pair.Key,
+                Frequency = pair.Value
+            })
+            .ToList();
+
+        while (nodes.Count > 1)
+        {
+            List<HuffmanNode> orderedNodes = nodes.OrderBy(node => node.Frequency).ToList();
+
+            if (orderedNodes.Count >= 2)
+            {
+                List<HuffmanNode> taken = orderedNodes.Take(2).ToList();
+
+                HuffmanNode parent = new HuffmanNode
                 {
-                    dp[i, w] = 0;
-                }
-                else if (weights[i - 1] <= w)
-                {
-                    dp[i, w] = Math.Max(values[i - 1] + dp[i - 1, w - weights[i - 1]], dp[i - 1, w]);
-                }
-                else
-                {
-                    dp[i, w] = dp[i - 1, w];
-                }
+                    Character = '*',
+                    Frequency = taken[0].Frequency + taken[1].Frequency,
+                    Left = taken[0],
+                    Right = taken[1]
+                };
+
+                nodes.Remove(taken[0]);
+                nodes.Remove(taken[1]);
+                nodes.Add(parent);
             }
         }
 
-        // The result is stored in dp[n, capacity]
-        return dp[n, capacity];
+        HuffmanNode root = nodes.FirstOrDefault();
+
+        Dictionary<char, string> codes = new Dictionary<char, string>();
+        Encode(root, "", codes);
+
+        return codes;
     }
 
+    private static void Encode(HuffmanNode node, string code, Dictionary<char, string> codes)
+    {
+        if (node != null)
+        {
+            if (node.Left == null && node.Right == null)
+            {
+                codes[node.Character] = code;
+            }
+            else
+            {
+                Encode(node.Left, code + "0", codes);
+                Encode(node.Right, code + "1", codes);
+            }
+        }
+    }
+}
+
+class Program
+{
     static void Main()
     {
-        int[] weights = { 1, 2, 3, 4, 5 };
-        int[] values = { 10, 20, 30, 40, 50 };
-        int capacity = 7;
+        string text = "A Huffman-kódolás egy elterjedt tömörítési eljárás.";
 
-        int maxValue = KnapsackDP(weights, values, capacity);
-        Console.WriteLine("Maximum value that can be obtained: " + maxValue);
+        Dictionary<char, string> codes = Huffman.Compress(text);
+
+        Console.WriteLine("Huffman-kódolás:");
+        foreach (var pair in codes)
+        {
+            Console.WriteLine($"{pair.Key}: {pair.Value}");
+        }
     }
 }
