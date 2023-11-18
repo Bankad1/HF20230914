@@ -77,7 +77,7 @@ class Program
 {
     static void Main()
     {
-        string text = "A Huffman-kódolás egy elterjedt tömörítési eljárás.";
+        string text = "Huffman kódolás teszt";
 
         Dictionary<char, string> codes = Huffman.Compress(text);
 
